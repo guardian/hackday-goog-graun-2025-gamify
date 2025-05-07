@@ -26,5 +26,8 @@ dist-ssr
 # tsc incremental build files
 *.tsbuildinfo
 
+# python cache files
+__pycache__
+
 # environment variables
-.env
+/.env
