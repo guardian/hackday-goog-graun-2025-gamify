@@ -8,6 +8,7 @@ import {
   Text,
   Spinner,
 } from "@chakra-ui/react";
+import { getResponse } from "./getResponse";
 
 // Globally styling components with Chakra seems finicky, so doing this
 const commonCardProps = {
@@ -24,15 +25,15 @@ const fakeResponses = [
   "Truly terrific. This is definitely going somewhere...",
 ];
 
-let responsePosition = 0;
+// let responsePosition = 0;
 
-const getResponse = async () => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, 500 + 1500 * Math.random());
-  });
-  const response = fakeResponses[++responsePosition] ?? fakeResponses.at(-1);
-  return response;
-};
+// const getFakeResponse = async () => {
+//   await new Promise((resolve) => {
+//     setTimeout(resolve, 500 + 1500 * Math.random());
+//   });
+//   const response = fakeResponses[++responsePosition] ?? fakeResponses.at(-1);
+//   return response;
+// };
 
 type History = {
   value: string;
@@ -78,7 +79,7 @@ function App() {
                   { value: pendingCommand, type: "command" },
                 ]);
 
-                const response = await getResponse();
+                const response = await getResponse(pendingCommand);
 
                 setSubmitting(false);
                 setHistory((history) => [
