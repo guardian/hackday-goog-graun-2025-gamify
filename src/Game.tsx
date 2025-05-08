@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Button, Input, HStack, Text, Spinner } from "@chakra-ui/react";
 import { startSession, sendCommand } from "./server";
+import type { AgentId, SessionInfo } from "./types";
 
-// TODO: offer different initial prompt depending on which agent user is interacting with
-const initialPrompt =
-  "You are an intrepid reporter investigating data. What will you do?";
+const initialPrompts: Record<AgentId, string> = {
+  test_guardian_agent:
+    "You are an intrepid reporter investigating data. What will you do?",
+  test_joke_agent: "Prepare for your sides to be discombobulated",
+};
 
 type GameState = "start" | "createSession" | "playing";
 
@@ -12,13 +15,6 @@ type History = {
   value: string;
   type: "command" | "response";
 }[];
-
-const initialHistory: History = [
-  {
-    value: initialPrompt,
-    type: "response",
-  },
-];
 
 const historyStyles = {
   command: {
@@ -32,30 +28,38 @@ const historyStyles = {
 
 export const Game = () => {
   const [gameState, setGameState] = useState<GameState>("start");
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [history, setHistory] = useState(initialHistory);
+  const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
+  const [history, setHistory] = useState<History>([]);
   const [pendingCommand, setPendingCommand] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const startGame = async (agentId: AgentId) => {
+    setGameState("createSession");
+    try {
+      const response = await startSession(agentId);
+      setSessionInfo({ sessionId: response.id, agentId });
+      setHistory([
+        {
+          type: "response",
+          value: initialPrompts[agentId],
+        },
+      ]);
+      setGameState("playing");
+    } catch (error) {
+      console.error(error);
+      setGameState("start");
+      // TODO: toasts for errors?
+    }
+  };
 
   if (gameState === "start") {
     return (
       <>
-        <Button
-          onClick={async () => {
-            setGameState("createSession");
-            try {
-              const response = await startSession();
-              setSessionId(response.id);
-              setGameState("playing");
-            } catch (error) {
-              console.error(error);
-              setGameState("start");
-              // TODO: toasts for errors?
-            }
-          }}
-        >
-          Start
-        </Button>
+        <Text>Pick the kind of game you want</Text>
+        <HStack gap="1rem">
+          <Button onClick={() => startGame("test_guardian_agent")}>Test</Button>
+          <Button onClick={() => startGame("test_joke_agent")}>Funny</Button>
+        </HStack>
       </>
     );
   }
@@ -82,19 +86,22 @@ export const Game = () => {
             { value: pendingCommand, type: "command" },
           ]);
 
-          if (!sessionId) {
-            throw Error("No session id");
+          if (!sessionInfo) {
+            throw Error("No session started");
           }
 
-          const response = await sendCommand(sessionId, pendingCommand);
+          try {
+            const response = await sendCommand(sessionInfo, pendingCommand);
 
-          console.log(response);
+            setHistory((history) => [
+              ...history,
+              { value: response, type: "response" },
+            ]);
+          } catch (error) {
+            console.error(error);
+          }
 
           setSubmitting(false);
-          setHistory((history) => [
-            ...history,
-            { value: response, type: "response" },
-          ]);
         }}
         style={{ width: "100%" }}
       >
@@ -107,7 +114,11 @@ export const Game = () => {
               setPendingCommand(event.target.value);
             }}
           />
-          <Button minWidth={"120px"} disabled={!pendingCommand || submitting}>
+          <Button
+            minWidth={"120px"}
+            disabled={!pendingCommand || submitting}
+            type="submit"
+          >
             Submit
             {submitting && (
               <>
@@ -118,6 +129,18 @@ export const Game = () => {
           </Button>
         </HStack>
       </form>
+
+      <HStack>
+        <Text>Or</Text>{" "}
+        <Button
+          onClick={() => {
+            setSessionInfo(null);
+            setGameState("start");
+          }}
+        >
+          pick a different game
+        </Button>
+      </HStack>
     </>
   );
 };
