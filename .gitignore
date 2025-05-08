@@ -28,6 +28,3 @@ dist-ssr
 
 # python cache files
 __pycache__
-
-# environment variables
-/.env

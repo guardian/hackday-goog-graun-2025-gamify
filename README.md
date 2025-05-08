@@ -2,6 +2,8 @@
 
 Hacky hack hack
 
+![Screenshot of project running](./screenshot.png)
+
 # Getting started
 
 ## Starting the UI:
