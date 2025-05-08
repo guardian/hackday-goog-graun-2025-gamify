@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, Input, HStack, Text, Spinner } from "@chakra-ui/react";
+import { useTransition, animated } from "@react-spring/web";
 import { startSession, sendCommand } from "./server";
 import type { AgentId, SessionInfo } from "./types";
 
@@ -20,19 +21,29 @@ type History = {
 const historyStyles = {
   command: {
     fontStyle: "italic",
-    opacity: 0.5,
+    color: "gray",
   },
   response: {
     whiteSpace: "pre-wrap",
   },
 };
 
+const AnimatedText = animated(Text);
+
 export const Game = () => {
+  console.log("definitely using react spring");
   const [gameState, setGameState] = useState<GameState>("start");
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [history, setHistory] = useState<History>([]);
   const [pendingCommand, setPendingCommand] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const historyTransitions = useTransition(history, {
+    from: {
+      opacity: 0,
+      transform: "translateY(10px)",
+    },
+    enter: [{ opacity: 1, transform: "translateY(0px)" }],
+  });
 
   const startGame = async (agentId: AgentId) => {
     setGameState("createSession");
@@ -90,10 +101,10 @@ export const Game = () => {
 
   return (
     <>
-      {history.map((entry, index) => (
-        <Text key={index} {...historyStyles[entry.type]}>
+      {historyTransitions((style, entry) => (
+        <AnimatedText style={style} {...historyStyles[entry.type]}>
           {entry.value}
-        </Text>
+        </AnimatedText>
       ))}
 
       <form
