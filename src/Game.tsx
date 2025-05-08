@@ -4,6 +4,7 @@ import { startSession, sendCommand } from "./server";
 import type { AgentId, SessionInfo } from "./types";
 
 const initialPrompts: Record<AgentId, string> = {
+  you_be_the_journalist: "Shouldn't see this, something must have gone wrong",
   test_guardian_agent:
     "You are an intrepid reporter investigating data. What will you do?",
   test_joke_agent: "Prepare for your sides to be discombobulated",
@@ -37,13 +38,29 @@ export const Game = () => {
     setGameState("createSession");
     try {
       const response = await startSession(agentId);
-      setSessionInfo({ sessionId: response.id, agentId });
-      setHistory([
-        {
-          type: "response",
-          value: initialPrompts[agentId],
-        },
-      ]);
+      const newSessionInfo = { sessionId: response.id, agentId };
+      setSessionInfo(newSessionInfo);
+
+      if (agentId === "you_be_the_journalist") {
+        const gameStartResponse = await sendCommand(
+          newSessionInfo,
+          "Start the game"
+        );
+        setHistory([
+          {
+            type: "response",
+            value: gameStartResponse,
+          },
+        ]);
+      } else {
+        setHistory([
+          {
+            type: "response",
+            value: initialPrompts[agentId],
+          },
+        ]);
+      }
+
       setGameState("playing");
     } catch (error) {
       console.error(error);
@@ -57,6 +74,9 @@ export const Game = () => {
       <>
         <Text>Pick the kind of game you want</Text>
         <HStack gap="1rem">
+          <Button onClick={() => startGame("you_be_the_journalist")}>
+            Be a journalist
+          </Button>
           <Button onClick={() => startGame("test_guardian_agent")}>Test</Button>
           <Button onClick={() => startGame("test_joke_agent")}>Funny</Button>
         </HStack>
