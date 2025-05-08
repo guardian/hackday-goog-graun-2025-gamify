@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Input, HStack, Text, Spinner } from "@chakra-ui/react";
+import { Box, Button, Input, HStack, Text, Spinner } from "@chakra-ui/react";
 import { useTransition, animated } from "@react-spring/web";
 import { startSession, sendCommand } from "./server";
 import type { AgentId, SessionInfo } from "./types";
@@ -28,10 +28,7 @@ const historyStyles = {
   },
 };
 
-const AnimatedText = animated(Text);
-
 export const Game = () => {
-  console.log("definitely using react spring");
   const [gameState, setGameState] = useState<GameState>("start");
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [history, setHistory] = useState<History>([]);
@@ -99,12 +96,25 @@ export const Game = () => {
     return <Spinner />;
   }
 
+  let gusIndex = 0;
+
   return (
     <>
       {historyTransitions((style, entry) => (
-        <AnimatedText style={style} {...historyStyles[entry.type]}>
-          {entry.value}
-        </AnimatedText>
+        <animated.div style={style}>
+          {entry.type === "response" &&
+            sessionInfo?.agentId === "you_be_the_journalist" && (
+              <Box margin="0 24px 24px">
+                <video
+                  src={`/gus/gus-${(gusIndex++ % 6) + 1}.mp4`}
+                  autoPlay
+                  muted
+                  loop
+                />
+              </Box>
+            )}
+          <Text {...historyStyles[entry.type]}>{entry.value}</Text>
+        </animated.div>
       ))}
 
       <form
